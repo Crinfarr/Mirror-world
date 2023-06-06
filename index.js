@@ -180,6 +180,5 @@ client.on('ready', () => {
             }
         }
     })
-    // console.log(await client.guilds.cache.get('397136742160793600').members.fetch());
 })
 client.login(token);
