@@ -1,8 +1,7 @@
 const fs = require('fs');
 const discord = require('discord.js');
-const { channel } = require('diagnostics_channel');
 
-const token = JSON.parse(fs.readFileSync('./.creds.json')).token;
+const {token, guildid} = JSON.parse(fs.readFileSync('./.creds.json'));
 
 const client = new discord.Client({
     intents: [
@@ -24,7 +23,7 @@ client.on('ready', () => {
     client.user.setStatus('invisible');
     console.log(`Status set to invis`);
     //fetch all channels in hccu
-    client.guilds.cache.get('397136742160793600').channels.fetch().then(async (channels) => {
+    client.guilds.cache.get(guildid).channels.fetch().then(async (channels) => {
         //iterate over channels
         for (let [id, channel] of channels) {
             switch (channel.type) {
