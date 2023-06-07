@@ -34,7 +34,7 @@ bot.on('ready', (client) => {
                 //create a folder to hold it unless I already did
                 if (fs.existsSync(`../serverclone/channels/${channel.name}`)) {
                     console.log('Folder exists, continuing...')
-                    break;
+                    continue;
                 }
                 if (!fs.existsSync(`../serverclone/channels/${channel.name}`)) {
                     console.log(`Creating folder...`)
@@ -43,7 +43,7 @@ bot.on('ready', (client) => {
 
                 console.log('writing metadata...')
                 //write json metadata of channel into file
-                fs.writeFileSync(`../serverclone/channels/${channel.name}/metadata`, JSON.stringify(channel.toJSON()));
+                fs.writeFileSync(`../serverclone/channels/${channel.name}/metadata`, JSON.stringify(channel.toJSON(), null, 4));
                 console.log('Done');
             }
         }
@@ -68,7 +68,7 @@ bot.on('ready', (client) => {
                     console.log('No permissions available');
                     //and add a tag marking this as unusable
                     fs.writeFileSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name + '/' : ''}${channel.name}/noperms`, '')
-                    break;
+                    continue;
                 }
                 //otherwise:
                 //make a csv for all messages unless it exists
@@ -84,95 +84,96 @@ bot.on('ready', (client) => {
                     );
                 }
 
-                let last: string = '';//TODO make this incrementally backup
+                let last: string = 'null';
                 //loop batch message requests (should auto delay itself)
                 console.log('Backing up ' + channel.name);
                 let nbatch = 0;
                 while (true) {
                     nbatch++;
-                    while (true) {
-                        channel.messages.fetch({ limit: 100, before: last }).then(msgs => {
-                            if (msgs === undefined) {
-                                throw new Error('Message object undefined'); 
-                            }
-                            if (msgs.size != 100) return;
-                            let id = msgs.at(-1)?.id
-                            if (id !== undefined) {
-                                last = id;
-                            }
+                    const fetchopts = (last == 'null') ? { limit: 100 } : { limit: 100, before: last }
+                    let msgs = await channel.messages.fetch(fetchopts);
+                    if (msgs === undefined) {
+                        throw new Error('Message object undefined');
+                    }
 
-                            console.log(`Backing up 100 messages... (batch ${nbatch}: ${msgs.at(-1)?.createdAt.toDateString()} thru ${msgs.at(0)?.createdAt.toDateString()})`);
-                            for (let [_id, msg] of msgs) {
-                                //backup attachment by id
-                                if (msg.attachments.size > 0) {
-                                    msg.attachments.each((attachment, _key, _) => {
-                                        //ignore if it exists
-                                        if (!fs.existsSync(`../serverclone/userdata/attachments/${attachment.id}.json`)) {
-                                            // console.log(`Backing up attachment ${attachment.id}`);
-                                            process.stdout.write('🗋');
-                                            fs.writeFileSync(`../serverclone/userdata/attachments/${attachment.id}.json`, JSON.stringify(attachment))
-                                        }
-                                    });
+                    console.log(`Backing up ${msgs.size} messages... (batch ${nbatch}: ${msgs.at(-1)?.createdAt.toDateString()} thru ${msgs.at(0)?.createdAt.toDateString()})`);
+                    for (let [_id, msg] of msgs) {
+                        //backup attachment by id
+                        if (msg.attachments.size > 0) {
+                            msg.attachments.each((attachment, _key, _) => {
+                                //ignore if it exists
+                                if (!fs.existsSync(`../serverclone/userdata/attachments/${attachment.id}.json`)) {
+                                    // console.log(`Backing up attachment ${attachment.id}`);
+                                    process.stdout.write('🗋');
+                                    fs.writeFileSync(`../serverclone/userdata/attachments/${attachment.id}.json`, JSON.stringify(attachment, null, 4))
                                 }
+                            });
+                        }
 
-                                //backup sticker by id
-                                if (msg.stickers?.size > 0) {
-                                    msg.stickers.each((sticker, _key, _) => {
-                                        //ignore if exists
-                                        if (!fs.existsSync(`../serverclone/userdata/stickers/${sticker.id}.json`)) {
-                                            // console.log(`Backing up sticker ${sticker.id}`);
-                                            process.stdout.write('𓉡');
-                                            fs.writeFileSync(`../serverclone/userdata/stickers/${sticker.id}.json`, JSON.stringify({
-                                                description: sticker.description,
-                                                format: sticker.format,
-                                                id: sticker.id,
-                                                name: sticker.name,
-                                                tags: sticker.tags,
-                                                url: sticker.url
-                                            }));
-                                        }
-                                    });
+                        //backup sticker by id
+                        if (msg.stickers?.size > 0) {
+                            msg.stickers.each((sticker, _key, _) => {
+                                //ignore if exists
+                                if (!fs.existsSync(`../serverclone/userdata/stickers/${sticker.id}.json`)) {
+                                    // console.log(`Backing up sticker ${sticker.id}`);
+                                    process.stdout.write('𓉡');
+                                    fs.writeFileSync(`../serverclone/userdata/stickers/${sticker.id}.json`, JSON.stringify({
+                                        description: sticker.description,
+                                        format: sticker.format,
+                                        id: sticker.id,
+                                        name: sticker.name,
+                                        tags: sticker.tags,
+                                        url: sticker.url
+                                    }, null, 4));
                                 }
+                            });
+                        }
 
-                                // Write user data if it does not exist
-                                if (!fs.existsSync(`../serverclone/userdata/${msg.author?.id}.json`)) {
-                                    // console.log(`\nBacking up user ${msg.author.username}`);
-                                    process.stdout.write('𓀀');
-                                    fs.writeFileSync(`../serverclone/userdata/${msg.author.id}.json`, JSON.stringify({
-                                        name: msg.author.username,
-                                        id: msg.author.id,
-                                        tag: msg.author.toString(),
-                                        avatar: msg.author.avatarURL(),
-                                    }));
-                                }
+                        // Write user data if it does not exist
+                        if (!fs.existsSync(`../serverclone/userdata/${msg.author?.id}.json`)) {
+                            // console.log(`\nBacking up user ${msg.author.username}`);
+                            process.stdout.write('𓀀');
+                            fs.writeFileSync(`../serverclone/userdata/${msg.author.id}.json`, JSON.stringify({
+                                name: msg.author.username,
+                                id: msg.author.id,
+                                tag: msg.author.toString(),
+                                avatar: msg.author.avatarURL(),
+                            }, null, 4));
+                        }
 
-                                //create attachment id reference string
-                                let attachids = '';
-                                if (msg.attachments.size > 0) {
-                                    msg.attachments.each((attachment, _key, _) => {
-                                        attachids += ':' + attachment.id
-                                    });
-                                }
-                                //create sticker id reference string
-                                let stickerids = '';
-                                if (msg.stickers.size > 0) {
-                                    msg.stickers.each((sticker, _key, _) => {
-                                        stickerids += ':' + sticker.id
-                                    });
-                                }
+                        //create attachment id reference string
+                        let attachids = '';
+                        if (msg.attachments.size > 0) {
+                            msg.attachments.each((attachment, _key, _) => {
+                                attachids += ':' + attachment.id
+                            });
+                        }
+                        //create sticker id reference string
+                        let stickerids = '';
+                        if (msg.stickers.size > 0) {
+                            msg.stickers.each((sticker, _key, _) => {
+                                stickerids += ':' + sticker.id
+                            });
+                        }
 
-                                //write message data to csv
-                                if (channel === null) {
-                                    throw new Error('Channel is null');
-                                }
-                                fs.appendFileSync(
-                                    `../serverclone/channels/${(channel.parent) ? channel.parent.name + '/' : ''}${channel.name}/messages.csv`,
-                                    `${msg.author.id},${encodeURIComponent(msg.content)},${attachids},${stickerids},${msg.createdTimestamp},${msg.editedTimestamp}\n`
-                                );
-                                process.stdout.write('🗩');
-                            }
-                            process.stdout.write('\n');
-                        });
+                        //write message data to csv
+                        if (channel === null) {
+                            throw new Error('Channel is null');
+                        }
+                        fs.appendFileSync(
+                            `../serverclone/channels/${(channel.parent) ? channel.parent.name + '/' : ''}${channel.name}/messages.csv`,
+                            `${msg.author.id},${encodeURIComponent(msg.content)},${attachids},${stickerids},${msg.createdTimestamp},${msg.editedTimestamp}\n`
+                        );
+                        process.stdout.write('🗩');
+                    }
+                    process.stdout.write('\n');
+                    if ((msgs.size < 100) || last == msgs.at(-1)?.id) {
+                        console.log(`Under 100 messages (${msgs.size}): ${channel.name} fully backed up`);
+                        break;
+                    }
+                    let id = msgs.at(-1)?.id
+                    if (id !== undefined) {
+                        last = id;
                     }
                 }
             }
