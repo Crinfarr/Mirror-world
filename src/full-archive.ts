@@ -16,16 +16,28 @@ type attachment = {
     duration: any,
     waveform: any
 }
+type sticker = {
+    description: null|string,
+    format: number,
+    id: string,
+    name: string,
+    tags: null|string,
+    url:string
+}
+type user = {
+    name:string,
+    id:string,
+    tag:string,
+    avatar:string
+}
 
-async function downloadAll() {
+export async function downloadAllAttachments() {
     for (let filename of fs.readdirSync('../serverclone/userdata/attachments')) {
         let [id, _extension] = filename.split('.');
         let filepath = `../serverclone/userdata/attachments/${filename}`;
         let newpath = `../serverclone/userdata/attachments/${id}/${filename}`
         if (fs.lstatSync(filepath).isDirectory()) {
-            console.log(`undoing old work for ${id}`);
-            fs.renameSync(`${filepath}/${id}.json`, `../serverclone/userdata/attachments/${id}.json`);
-            fs.rmSync(filepath, { recursive: true, force: true });
+            console.log(`Found old work for ${id}`);
             continue;
         }
         console.log(`Creating download dir for ${id}`);
@@ -52,4 +64,86 @@ async function downloadAll() {
         });
     }
 };
-downloadAll();
+export async function downloadAllStickers() {
+    for (let filename of fs.readdirSync('../serverclone/userdata/stickers')) {
+        let [id, _extension] = filename.split('.');
+        let filepath = `../serverclone/userdata/stickers/${filename}`;
+        let newpath = `../serverclone/userdata/stickers/${id}/${filename}`;
+        if (fs.lstatSync(filepath).isDirectory()) {
+            console.log(`Found old work for ${id}`);
+            continue;
+        }
+        console.log(`Creating download dir for ${id}`);
+        fs.mkdirSync(`../serverclone/userdata/stickers/${id}`);
+        console.log(`Moving ${filename} to download dir`);
+        fs.renameSync(filepath, newpath);
+        const content:sticker = JSON.parse(fs.readFileSync(newpath).toString());
+        console.log('Creating write stream for download');
+        let fname = /(?<=stickers\/).+\..+$/gm.exec(content.url);
+        if (fname == null) {
+            throw new Error('Could not extract filename from '+content.url);
+        }
+        const outfile = fs.createWriteStream(`../serverclone/userdata/stickers/${id}/${fname}`);
+        console.log(`Downloading ${fname} (${content.name})`);
+        await new Promise((resolve, reject) => {
+            https.get(content.url, (res) => {
+                res.pipe(outfile);
+                outfile.on('finish', () => {
+                    outfile.close();
+                    console.log(`${fname} (${content.name}) downloaded successfully`);
+                    resolve(null);
+                });
+                res.on('error', () => {
+                    console.log(`${content.name} download failed`);
+                    reject(null);
+                });
+            });
+        });
+    }
+}
+export async function downloadAllUsers() {
+    for (let filename of fs.readdirSync('../serverclone/userdata/users')) {
+        let [id, _extension] = filename.split('.');
+        let filepath = `../serverclone/userdata/users/${filename}`;
+        let newpath = `../serverclone/userdata/users/${id}/${filename}`;
+        if (fs.lstatSync(filepath).isDirectory()) {
+            console.log(`Found old work for ${id}`);
+            continue;
+        }
+        console.log(`Creating download dir for ${id}`);
+        fs.mkdirSync(`../serverclone/userdata/users/${id}`);
+        console.log(`Moving ${filename} to download dir`);
+        fs.renameSync(filepath, newpath);
+        const content:user = JSON.parse(fs.readFileSync(newpath).toString());
+        if (content.avatar == null) {
+            console.log(`User ${content.name} has no avatar`);
+            continue;
+        }
+        console.log('Creating write stream for download');
+        let fname = new RegExp(`(?<=${id}\/).+\..+$`).exec(content.avatar);
+        if (fname == null) {
+            throw new Error('Could not extract filename from '+content.avatar);
+        }
+        const outfile = fs.createWriteStream(`../serverclone/userdata/users/${id}/${fname}`);
+        console.log(`Downloading ${fname} (${content.name})`);
+        await new Promise((resolve, reject) => {
+            https.get(content.avatar, (res) => {
+                res.pipe(outfile);
+                outfile.on('finish', () => {
+                    outfile.close();
+                    console.log(`${fname} (${content.name}) downloaded successfully`);
+                    resolve(null);
+                });
+                res.on('error', () => {
+                    console.log(`${content.name} download failed`);
+                    reject(null);
+                });
+            });
+        });
+    }
+}
+if (require.main == module) {
+    downloadAllAttachments();
+    downloadAllStickers();
+    downloadAllUsers();
+}
