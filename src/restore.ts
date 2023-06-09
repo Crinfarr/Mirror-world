@@ -125,7 +125,7 @@ export function restoreServer() {
                         await hook.send({
                             avatarURL: authormeta.avatar,
                             username: authormeta.name,
-                            content: `\`${new Date(created / 100).toISOString()}${edited ? ' (edited ' + new Date(edited).toISOString() + ')' : ''}\`\n${Buffer.from(content, 'base64').toString('utf-8')}`,
+                            content: Buffer.from(content, 'base64').toString('utf-8'),
                             files: messageAttachments,
                             embeds: messageEmbeds
                         });
