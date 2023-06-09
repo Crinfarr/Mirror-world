@@ -3,6 +3,7 @@ import discord from 'discord.js'
 import { downloadAllAttachments, downloadAllStickers, downloadAllUsers } from './full-archive';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import { restoreServer } from './restore';
 
 const { token, guildid } = JSON.parse(fs.readFileSync('../.creds.json').toString()).archiver;
 const bot = new discord.Client({
@@ -106,7 +107,8 @@ bot.on('ready', (client) => {
                     });
                     console.log('executing db init');
                     await declaredb.exec(`CREATE TABLE Messages (
-                        id INTEGER NOT NULL PRIMARY KEY,
+                        id TEXT NOT NULL PRIMARY KEY,
+                        author TEXT NOT NULL,
                         content TEXT,
                         attachments TEXT,
                         created INTEGER NOT NULL,
@@ -160,12 +162,14 @@ bot.on('ready', (client) => {
                         //db insert query
                         await db.exec(`INSERT INTO Messages (
                                 id,
+                                author,
                                 content,
                                 attachments,
                                 created,
                                 edited
                             ) VALUES (
-                                ${msg.id},
+                                "${msg.id}",
+                                "${msg.author.id}"
                                 "${Buffer.from(msg.content).toString('base64')}",
                                 "${Buffer.from(JSON.stringify(allAttachments)).toString('base64')}",
                                 ${msg.createdTimestamp},
@@ -238,10 +242,12 @@ bot.on('ready', (client) => {
                 }
             }
         }
+        await downloadAllAttachments();
+        await downloadAllStickers();
+        await downloadAllUsers();
+        await restoreServer();
     });
 
-    // downloadAllAttachments();
-    // downloadAllStickers();
-    // downloadAllUsers();
+
 })
 bot.login(token);
