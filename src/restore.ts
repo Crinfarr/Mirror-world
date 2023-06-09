@@ -72,7 +72,7 @@ export function restoreServer() {
                     }
                     for (let { _id, author, content, attachments, created, edited } of messages) {
                         //metadata of all attachments
-                        const attachmentmeta: Array<{ type: "attachment" | "embed" | "sticker", id?: string, content?: Embed }> = JSON.parse(Buffer.from(attachments).toString('utf-8'));
+                        const attachmentmeta: Array<{ type: "attachment" | "embed" | "sticker", id?: string, content?: Embed }> = JSON.parse(Buffer.from(attachments, 'base64').toString('utf-8'));
                         let messageEmbeds: Array<Embed> = [];
 
                         //exactly the type used by webhook files parameter
@@ -125,7 +125,7 @@ export function restoreServer() {
                         await hook.send({
                             avatarURL: authormeta.avatar,
                             username: authormeta.name,
-                            content: `\`${new Date(created / 100).toISOString()}${edited ? ' (edited ' + new Date(edited).toISOString + ')' : ''}\`\n${Buffer.from(content).toString('utf-8')}`,
+                            content: `\`${new Date(created / 100).toISOString()}${edited ? ' (edited ' + new Date(edited).toISOString + ')' : ''}\`\n${Buffer.from(content, 'base64').toString('utf-8')}`,
                             files: attachments,
                             embeds: messageEmbeds
                         });
