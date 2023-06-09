@@ -71,8 +71,6 @@ export function restoreServer() {
                         continue; //if there are no messages in the db it returns a non iterable, I'm assuming it's falsy
                     }
                     for (let { _id, author, content, attachments, created, edited } of messages) {
-                        //metadata of author
-                        const authormeta: user = JSON.parse(fs.readFileSync(`../serverclone/userdata/users/${author}`).toString());
                         //metadata of all attachments
                         const attachmentmeta: Array<{ type: "attachment" | "embed" | "sticker", id?: string, content?: Embed }> = JSON.parse(Buffer.from(attachments).toString('utf-8'));
                         let messageEmbeds: Array<Embed> = [];
@@ -81,10 +79,14 @@ export function restoreServer() {
                         let messageAttachments: Array<(AttachmentBuilder | Attachment | AttachmentPayload | BufferResolvable)> = [];
                         //check if full archive mode is enabled (if it is, upload files instead of urls)
                         let fullArchiveMode = {
-                            attachments: true,
-                            stickers: true,
-                            users: true
+                            attachments: fs.existsSync(`../serverclone/userdata/attachments/.archived`),
+                            stickers: fs.existsSync(`../serverclone/userdata/stickers/.archived`),
+                            users: fs.existsSync(`../serverclone/userdata/users/.archived`)
                         }
+
+                        //metadata of author
+                        const authormeta: user = JSON.parse(fs.readFileSync(`../serverclone/userdata/users/${(fullArchiveMode.users) ? author + '/' : ''}${author}.json`).toString());
+
                         for (let { type, id, content } of attachmentmeta) {
                             switch (type) {
                                 case "attachment":
