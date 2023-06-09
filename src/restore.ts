@@ -1,47 +1,10 @@
 import fs from 'fs';
-import discord from 'discord.js';
-
-type categorymeta = channelmeta & {
-    type: discord.ChannelType.GuildCategory, //4
-}
-type textmeta = channelmeta & {
-    type: discord.ChannelType.GuildText, //0
-    messages: Array<string>,
-    threads: Array<string>,
-    nsfw: boolean,
-    topic: string,
-    lastMessageId: string,
-    lastPinTimestamp: number,
-    rateLimitPerUser: number
-}
-type voicemeta = channelmeta & {
-    type: discord.ChannelType.GuildVoice, //2
-    messages:Array<string>,
-    nsfw: boolean,
-    rtcregion:null|string,
-    bitrate:number,
-    userlimit:number,
-    videoQualityMode:null|string,
-    lastMessageId:null|string,
-    rateLimitPerUser:number
-}
-type channelmeta = {
-    type:number|discord.ChannelType,
-    guild:string,
-    guildid:string,
-    permissionOverwrites:Array<string>,
-    flags:number,
-    id:string,
-    name:string,
-    rawPosition:number,
-    parentId: null|string,
-    createdTimestamp:number
-}
+import { ChannelType, Client, Guild, GuildChannelCreateOptions } from 'discord.js';
 
 const { token, guildid } = JSON.parse(fs.readFileSync('../.creds.json').toString()).restorer
 
 function restoreServer() {
-    const bot = new discord.Client({
+    const bot = new Client({
         intents: [
             'GuildWebhooks',
         ]
@@ -50,7 +13,7 @@ function restoreServer() {
     bot.on('ready', async (client) => {
         console.log(`Logged in as ${client.user.username}`);
 
-        const ClonePod = await new Promise<discord.Guild>((resolve, reject) => {
+        const ClonePod = await new Promise<Guild>((resolve, reject) => {
             client.guilds.fetch().then((guilds) => {
                 let guild = guilds.get(guildid);
                 if (guild == undefined) {
@@ -63,14 +26,13 @@ function restoreServer() {
             });
         });
         for (let folder of fs.readdirSync('../serverclone/channels')) {
-            let ccat:categorymeta = JSON.parse(fs.readFileSync(`../serverclone/channels/${folder}/metadata`).toString());
+            let ccat:GuildChannelCreateOptions & {type: ChannelType.GuildCategory} = JSON.parse(fs.readFileSync(`../serverclone/channels/${folder}/metadata`).toString());
             let category = await ClonePod.channels.create(ccat);
             for (let subfolder of fs.readdirSync(`../serverclone/channels/${folder}`)) {
                 if (subfolder == 'metadata') {
                     //ignore metadata
                     continue;
                 }
-                let cchannel:
             }
         }
     });
@@ -80,7 +42,7 @@ function restoreServer() {
         console.log(JSON.stringify(info, null, 4));
     });
 
-    //HACK ALL OF THESE THINGS HAVE TO HAPPEN LAST
+    //HEY ALL OF THESE THINGS HAVE TO HAPPEN LAST
     bot.login(token);
 }
 
