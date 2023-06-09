@@ -1,35 +1,6 @@
 import fs from 'fs';
 import https from 'https';
-
-type attachment = {
-    attachment: string,
-    name: string,
-    id: string,
-    size: number,
-    url: string,
-    proxyUrl: string,
-    height: number | null,
-    width: number | null,
-    contentType: any,
-    description: any,
-    ephemeral: any,
-    duration: any,
-    waveform: any
-}
-type sticker = {
-    description: null|string,
-    format: number,
-    id: string,
-    name: string,
-    tags: null|string,
-    url:string
-}
-type user = {
-    name:string,
-    id:string,
-    tag:string,
-    avatar:string
-}
+import { attachment, sticker, user } from './types';
 
 export async function downloadAllAttachments() {
     for (let filename of fs.readdirSync('../serverclone/userdata/attachments')) {
@@ -63,6 +34,8 @@ export async function downloadAllAttachments() {
             });
         });
     }
+    //add a note for the archiver to let it know everything is done
+    fs.writeFileSync(`../serverclone/userdata/attachments/.archived`, '');
 };
 export async function downloadAllStickers() {
     for (let filename of fs.readdirSync('../serverclone/userdata/stickers')) {
@@ -77,11 +50,11 @@ export async function downloadAllStickers() {
         fs.mkdirSync(`../serverclone/userdata/stickers/${id}`);
         console.log(`Moving ${filename} to download dir`);
         fs.renameSync(filepath, newpath);
-        const content:sticker = JSON.parse(fs.readFileSync(newpath).toString());
+        const content: sticker = JSON.parse(fs.readFileSync(newpath).toString());
         console.log('Creating write stream for download');
         let fname = /(?<=stickers\/).+\..+$/gm.exec(content.url);
         if (fname == null) {
-            throw new Error('Could not extract filename from '+content.url);
+            throw new Error('Could not extract filename from ' + content.url);
         }
         const outfile = fs.createWriteStream(`../serverclone/userdata/stickers/${id}/${fname}`);
         console.log(`Downloading ${fname} (${content.name})`);
@@ -100,6 +73,8 @@ export async function downloadAllStickers() {
             });
         });
     }
+    //add a note for the archiver to let it know everything is done
+    fs.writeFileSync(`../serverclone/userdata/attachments/.archived`, '');
 }
 export async function downloadAllUsers() {
     for (let filename of fs.readdirSync('../serverclone/userdata/users')) {
@@ -114,7 +89,7 @@ export async function downloadAllUsers() {
         fs.mkdirSync(`../serverclone/userdata/users/${id}`);
         console.log(`Moving ${filename} to download dir`);
         fs.renameSync(filepath, newpath);
-        const content:user = JSON.parse(fs.readFileSync(newpath).toString());
+        const content: user = JSON.parse(fs.readFileSync(newpath).toString());
         if (content.avatar == null) {
             console.log(`User ${content.name} has no avatar`);
             continue;
@@ -122,7 +97,7 @@ export async function downloadAllUsers() {
         console.log('Creating write stream for download');
         let fname = new RegExp(`(?<=${id}\/).+\..+$`).exec(content.avatar);
         if (fname == null) {
-            throw new Error('Could not extract filename from '+content.avatar);
+            throw new Error('Could not extract filename from ' + content.avatar);
         }
         const outfile = fs.createWriteStream(`../serverclone/userdata/users/${id}/${fname}`);
         console.log(`Downloading ${fname} (${content.name})`);
@@ -141,6 +116,8 @@ export async function downloadAllUsers() {
             });
         });
     }
+    //add a note for the archiver to let it know everything is done
+    fs.writeFileSync(`../serverclone/userdata/attachments/.archived`, '');
 }
 if (require.main == module) {
     downloadAllAttachments();
