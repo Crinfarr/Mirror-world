@@ -122,7 +122,8 @@ export function restoreServer() {
                             content: `\`${new Date(created / 100).toISOString()}${edited ? ' (edited ' + new Date(edited).toISOString + ')' : ''}\`\n${Buffer.from(content).toString('utf-8')}`,
                             files: attachments,
                             embeds: messageEmbeds
-                        })
+                        });
+                        process.stdout.write('💬')
                     }
                 }
             }

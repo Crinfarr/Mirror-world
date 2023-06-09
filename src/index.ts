@@ -175,9 +175,9 @@ bot.on('ready', (client) => {
                                 ${msg.createdTimestamp},
                                 ${msg.editedTimestamp ? msg.editedTimestamp : 'null'}
                             )`).catch((_) => {
-                            process.stdout.write('?');
+                            process.stdout.write('⁉️');
                         })
-                        process.stdout.write('🗩');
+                        process.stdout.write('💬');
 
                         //archive attachments
                         if (msg.attachments.size > 0) {
@@ -187,7 +187,7 @@ bot.on('ready', (client) => {
                                     !fs.existsSync(`../serverclone/userdata/attachments/${attachment.id}.json`)
                                 ) {
                                     fs.writeFileSync(`../serverclone/userdata/attachments/${attachment.id}.json`, JSON.stringify(attachment, null, 4));
-                                    process.stdout.write('🗋');
+                                    process.stdout.write('📁');
                                 }
                             });
                         }
@@ -207,7 +207,7 @@ bot.on('ready', (client) => {
                                         tags: sticker.tags,
                                         url: sticker.url
                                     }, null, 4));
-                                    process.stdout.write('𓉡');
+                                    process.stdout.write('🖼️');
                                 }
                             })
                         }
