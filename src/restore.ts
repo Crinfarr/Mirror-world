@@ -136,9 +136,8 @@ export function restoreServer() {
         }
     });
 
-    bot.rest.on('rateLimited', (info) => {
-        console.log('Rate limited!');
-        console.log(JSON.stringify(info, null, 4));
+    bot.rest.on('rateLimited', (_) => {
+        process.stdout.write('⏸️');
     });
 
     //HEY ALL OF THESE THINGS HAVE TO HAPPEN LAST
