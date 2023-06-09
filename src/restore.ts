@@ -66,7 +66,7 @@ export function restoreServer() {
                     });
                     console.log('Creating query');
                     let messages = await db.all(`SELECT * FROM Messages ORDER BY created ASC`);
-                    console.log(messages);
+                    // console.log(messages);
                     if (!messages) {
                         continue; //if there are no messages in the db it returns a non iterable, I'm assuming it's falsy
                     }
