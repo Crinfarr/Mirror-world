@@ -18,6 +18,7 @@ if (!fs.existsSync('../serverclone')) {
     fs.mkdirSync('../serverclone/channels');
     fs.mkdirSync('../serverclone/userdata/attachments');
     fs.mkdirSync('../serverclone/userdata/stickers');
+    fs.mkdirSync('../serverclone/userdata/users');
 }
 
 bot.on('ready', (client) => {
@@ -212,7 +213,7 @@ bot.on('ready', (client) => {
                             !fs.existsSync(`../serverclone/userdata/users/${msg.author.id}`) &&
                             !fs.existsSync(`../serverclone/userdata/users/${msg.author.id}.json`)
                         ) {
-                            fs.writeFileSync(`../serverclone/userdata/${msg.author.id}.json`, JSON.stringify({
+                            fs.writeFileSync(`../serverclone/userdata/users/${msg.author.id}.json`, JSON.stringify({
                                 name: msg.author.username,
                                 id: msg.author.id,
                                 tag: msg.author.toString(),
@@ -237,8 +238,7 @@ bot.on('ready', (client) => {
                 }
             }
         }
-    })
-    client.destroy();
+    });
 
     // downloadAllAttachments();
     // downloadAllStickers();
