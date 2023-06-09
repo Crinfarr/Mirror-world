@@ -66,6 +66,9 @@ export function restoreServer() {
                     });
                     console.log('Creating query');
                     let messages = await db.get(`SELECT * FROM Messages ORDER BY created ASC`);
+                    if (!messages) {
+                        continue; //if there are no messages in the db it returns a non iterable, I'm assuming it's falsy
+                    }
                     for (let { _id, author, content, attachments, created, edited } of messages) {
                         //metadata of author
                         const authormeta: user = JSON.parse(fs.readFileSync(`../serverclone/userdata/users/${author}`).toString());
