@@ -81,9 +81,9 @@ export function restoreServer() {
                         let messageAttachments: Array<(AttachmentBuilder | Attachment | AttachmentPayload | BufferResolvable)> = [];
                         //check if full archive mode is enabled (if it is, upload files instead of urls)
                         let fullArchiveMode = {
-                            attachments: fs.existsSync(`../serverclone/userdata/attachments/.archived`),
-                            stickers: fs.existsSync(`../serverclone/userdata/stickers/.archived`),
-                            users: fs.existsSync(`../serverclone/userdata/users/.archived`)
+                            attachments: true,
+                            stickers: true,
+                            users: true
                         }
                         for (let { type, id, content } of attachmentmeta) {
                             switch (type) {
