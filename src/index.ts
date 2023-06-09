@@ -169,7 +169,7 @@ bot.on('ready', (client) => {
                                 edited
                             ) VALUES (
                                 "${msg.id}",
-                                "${msg.author.id}"
+                                "${msg.author.id}",
                                 "${Buffer.from(msg.content).toString('base64')}",
                                 "${Buffer.from(JSON.stringify(allAttachments)).toString('base64')}",
                                 ${msg.createdTimestamp},
