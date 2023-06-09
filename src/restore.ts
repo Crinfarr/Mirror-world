@@ -126,7 +126,7 @@ export function restoreServer() {
                             avatarURL: authormeta.avatar,
                             username: authormeta.name,
                             content: `\`${new Date(created / 100).toISOString()}${edited ? ' (edited ' + new Date(edited).toISOString + ')' : ''}\`\n${Buffer.from(content, 'base64').toString('utf-8')}`,
-                            files: attachments,
+                            files: messageAttachments,
                             embeds: messageEmbeds
                         });
                         process.stdout.write('💬')
