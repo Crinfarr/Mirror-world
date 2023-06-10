@@ -231,7 +231,7 @@ export function backupServer() {
                                 }, null, 4));
                             }
                         }
-                        process.stdout.write('\n');
+                        // process.stdout.write('\n');
                         if (messages.size < 100) {
                             // console.log(`Under 100 messages (${messages.size}): ${channel.name.replace(/[\.\?\'\"]/gm, '')} fully backed up.`);
                             break;
