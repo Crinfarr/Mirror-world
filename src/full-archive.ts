@@ -11,6 +11,10 @@ export async function downloadAllAttachments() {
             console.log(`Found old work for ${id}`);
             continue;
         }
+        if (id == '') {
+            console.log('Ignoring empty id');
+            continue;
+        }
         console.log(`Creating download dir for ${id}`);
         fs.mkdirSync(`../serverclone/userdata/attachments/${id}`);
         console.log(`Moving ${filename} to download dir`);
