@@ -28,11 +28,11 @@ export async function downloadAllAttachments() {
                 res.pipe(outfile);
                 outfile.on('finish', () => {
                     outfile.close();
-                    console.log(`${content.name} downloaded successfully`);
+                    // console.log(`${content.name} downloaded successfully`);
                     resolve(null);
                 });
                 outfile.on('error', () => {
-                    console.log(`${content.name} download failed`);
+                    // console.log(`${content.name} download failed`);
                     reject(null);
                 });
             });

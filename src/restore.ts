@@ -14,9 +14,9 @@ export function restoreServer() {
     });
 
     bot.on('ready', async (client) => {
-// console.log(`Logged in as ${client.user.username}`);
+        // console.log(`Logged in as ${client.user.username}`);
 
-// console.log('Creating clone pod');
+        // console.log('Creating clone pod');
         const ClonePod = await new Promise<Guild>((resolve, reject) => {
             client.guilds.fetch().then((guilds) => {
                 let guild = guilds.get(guildid);
@@ -32,15 +32,15 @@ export function restoreServer() {
         process.stdout.write('🌐');
         for (let folder of fs.readdirSync('../serverclone/channels')) {
             const oldcategorymeta: GuildChannelCreateOptions & { type: ChannelType.GuildCategory } = JSON.parse(fs.readFileSync(`../serverclone/channels/${folder}/metadata`).toString());
-// console.log(`Cloning category ${oldcategorymeta.name}`);
+            // console.log(`Cloning category ${oldcategorymeta.name}`);
             const categorymeta: GuildChannelCreateOptions & { type: ChannelType.GuildCategory } = {
                 name: oldcategorymeta.name,
                 position: oldcategorymeta.position,
                 type: ChannelType.GuildCategory
             }
             const category = await ClonePod.channels.create(categorymeta);
-                process.stdout.write('📂');
-                // console.log(`Created category ${category.name}`);
+            process.stdout.write('📂');
+            // console.log(`Created category ${category.name}`);
             for (let subfolder of fs.readdirSync(`../serverclone/channels/${folder}`)) {
                 if (subfolder == 'metadata') {
                     //ignore metadata
@@ -48,7 +48,7 @@ export function restoreServer() {
                     continue;
                 }
                 const oldchannelmeta: GuildChannelCreateOptions & { type: ChannelType.GuildText | ChannelType.GuildVoice } = JSON.parse(fs.readFileSync(`../serverclone/channels/${folder}/${subfolder}/metadata`).toString());
-// console.log(`Creating ${(oldchannelmeta.type == ChannelType.GuildText) ? 'Text' : 'Voice'} Channel ${oldchannelmeta.name}`);
+                // console.log(`Creating ${(oldchannelmeta.type == ChannelType.GuildText) ? 'Text' : 'Voice'} Channel ${oldchannelmeta.name}`);
                 const channelmeta: GuildChannelCreateOptions & { type: ChannelType.GuildText | ChannelType.GuildVoice } = {
                     name: oldchannelmeta.name,
                     type: oldchannelmeta.type,
@@ -57,12 +57,12 @@ export function restoreServer() {
                 }
                 const channel = await ClonePod.channels.create(channelmeta);
                 if (channel.type == ChannelType.GuildText) {
-// console.log('Creating restore hook...');
+                    // console.log('Creating restore hook...');
                     const hook = await channel.createWebhook({
                         name: 'Mirror World'
                     });
-// console.log('Restoring messages...');
-// console.log('Opening db');
+                    // console.log('Restoring messages...');
+                    // console.log('Opening db');
                     const db = await open({
                         driver: Database,
                         filename: `../serverclone/channels/${folder}/${subfolder}/messages.sqlite.db`
@@ -70,6 +70,7 @@ export function restoreServer() {
                     process.stdout.write('👁‍🗨');
                     // console.log('Creating query');
                     let messages = await db.all(`SELECT * FROM Messages ORDER BY created ASC`);
+                    db.close();
                     // console.log(messages);
                     if (!messages) {
                         continue; //if there are no messages in the db it returns a non iterable, I'm assuming it's falsy
@@ -133,7 +134,7 @@ export function restoreServer() {
                             files: messageAttachments,
                             embeds: messageEmbeds
                         });
-                        process.stdout.write('💬')
+                        process.stdout.write('💬');
                     }
                 }
             }
