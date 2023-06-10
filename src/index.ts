@@ -9,3 +9,4 @@ async function main() {
     await downloadAllUsers();
     await restoreServer();
 }
+main();
