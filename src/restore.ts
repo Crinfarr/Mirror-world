@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Attachment, AttachmentBuilder, AttachmentPayload, BufferResolvable, ChannelType, Client, Embed, Guild, GuildChannelCreateOptions, } from 'discord.js';
+import { Attachment, AttachmentBuilder, AttachmentPayload, BufferResolvable, ChannelType, Client, DiscordAPIError, Embed, Guild, GuildChannelCreateOptions, } from 'discord.js';
 import { open } from 'sqlite';
 import { Database } from 'sqlite3';
 import { attachment, sticker, user } from './types';
@@ -133,6 +133,13 @@ export function restoreServer() {
                             content: Buffer.from(content, 'base64').toString('utf-8'),
                             files: messageAttachments,
                             embeds: messageEmbeds
+                        }).catch((e:DiscordAPIError) => {
+                            if (e.code == 50006) {
+                                console.log('🔲');
+                            }
+                            else {
+                                throw e
+                            }
                         });
                         process.stdout.write('💬');
                     }
