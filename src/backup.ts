@@ -254,6 +254,6 @@ export function backupServer() {
     backupBot.login(token);
 }
 
-if (require.main == exports) {
+if (require.main == module) {
     backupServer();
 }
