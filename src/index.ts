@@ -23,9 +23,9 @@ if (!fs.existsSync('../serverclone')) {
 }
 
 bot.on('ready', (client) => {
-    console.log(`Logged in as ${client.user.username}`);
+    // console.log(`Logged in as ${client.user.username}`);
     client.user.setStatus('invisible');
-    console.log(`Status set to invis`);
+    // console.log(`Status set to invis`);
 
     //fetch all channels in hccu
     client.guilds.cache.get(guildid)?.channels.fetch().then(async (channels) => {
@@ -35,21 +35,23 @@ bot.on('ready', (client) => {
                 throw new Error('Channel is null')
             }
             if (channel.type == discord.ChannelType.GuildCategory) {
-                console.log(`Cloning category ${channel.name.replace(/[\.\?\'\"]/gm, '')}...`);
+                // console.log(`Cloning category ${channel.name.replace(/[\.\?\'\"]/gm, '')}...`);
                 //create a folder to hold it unless I already did
                 if (fs.existsSync(`../serverclone/channels/${channel.name.replace(/[\.\?\'\"]/gm, '')}`)) {
-                    console.log('Folder exists, continuing...')
+                    // console.log('Folder exists, continuing...')
+                    process.stdout.write('💥');
                     continue;
                 }
                 if (!fs.existsSync(`../serverclone/channels/${channel.name.replace(/[\.\?\'\"]/gm, '')}`)) {
-                    console.log(`Creating folder...`)
+                    // console.log(`Creating folder...`)
                     fs.mkdirSync(`../serverclone/channels/${channel.name.replace(/[\.\?\'\"]/gm, '')}`);
                 }
 
-                console.log('writing metadata...')
+                // console.log('writing metadata...')
                 //write json metadata of channel into file
                 fs.writeFileSync(`../serverclone/channels/${channel.name.replace(/[\.\?\'\"]/gm, '')}/metadata`, JSON.stringify(channel.toJSON(), null, 4));
-                console.log('Done');
+                // console.log('Done');
+                process.stdout.write('📂');
             }
         }
         for (let [_id, channel] of channels) {
@@ -57,23 +59,25 @@ bot.on('ready', (client) => {
                 throw new Error('Channel is null')
             }
             if (channel.type == discord.ChannelType.GuildText) {
-                console.log(`Cloning text channel ${channel.name.replace(/[\.\?\'\"]/gm, '')}...`);
+                // console.log(`Cloning text channel ${channel.name.replace(/[\.\?\'\"]/gm, '')}...`);
                 //skip creating folder if I already made one
                 if (!fs.existsSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}`)) {
-                    console.log(`Creating channel folder`)
+                    // console.log(`Creating channel folder`)
                     fs.mkdirSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}`);
                     fs.writeFileSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/metadata`, JSON.stringify(channel.toJSON(), null, 4));
                 }
                 try {
-                    console.log("Trying 1 fetch operation...");
+                    // console.log("Trying 1 fetch operation...");
                     //see if I can fetch 1 message
                     await channel.messages.fetch({ limit: 1 });
+                    process.stdout.write('❔');
                 }
                 catch (error) {
                     //if I can't don't bother doing any more
-                    console.log('No permissions available');
+                    // console.log('No permissions available');
                     //and add a tag marking this as unusable
                     fs.writeFileSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/noperms`, '')
+                    process.stdout.write('💥');
                     continue;
                 }
                 //otherwise:
@@ -95,17 +99,17 @@ bot.on('ready', (client) => {
                     }
                     lastID = tID.id;
                     incremental = true;
-                    console.log(`Existing db for ${channel.name} detected`);
+                    // console.log(`Existing db for ${channel.name} detected`);
                 }
                 //don't make the db before checking if it exists, dumbass
                 if (!fs.existsSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/messages.sqlite.db`)) {
-                    console.log('Creating message backup database...');
-                    console.log(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/messages.sqlite.db`);
+                    // console.log('Creating message backup database...');
+                    // console.log(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/messages.sqlite.db`);
                     let declaredb = await open({
                         filename: `../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/messages.sqlite.db`,
                         driver: sqlite3.verbose().Database
                     });
-                    console.log('executing db init');
+                    // console.log('executing db init');
                     await declaredb.exec(`CREATE TABLE Messages (
                         id TEXT NOT NULL PRIMARY KEY,
                         author TEXT NOT NULL,
@@ -114,10 +118,11 @@ bot.on('ready', (client) => {
                         created INTEGER NOT NULL,
                         edited INTEGER
                     );`);
-                    console.log('committing');
+                    // console.log('committing');
                     await declaredb.close();
+                    process.stdout.write('👁‍🗨');
                 }
-                console.log(`Backing up ${channel.name.replace(/[\.\?\'\"]/gm, '')}`);
+                // console.log(`Backing up ${channel.name.replace(/[\.\?\'\"]/gm, '')}`);
                 const db = await open({
                     filename: `../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/messages.sqlite.db`,
                     driver: sqlite3.verbose().Database
@@ -132,7 +137,7 @@ bot.on('ready', (client) => {
                         fetchopts = { limit: 100, before: lastID };
                     }
                     if (incremental && lastID !== null) {
-                        console.log('Incremental backup enabled: selecting messages since ' + lastID);
+                        // console.log('Incremental backup enabled: selecting messages since ' + lastID);
                         fetchopts = { limit: 100, after: lastID };
                     }
                     const messages = await channel.messages.fetch(fetchopts);
@@ -146,7 +151,7 @@ bot.on('ready', (client) => {
                         break;
                     }
                     lastID = lastMSG.id;
-                    console.log(`Backing up ${messages.size} messages... (batch ${nbatch}, ${messages.at(-1)?.createdAt.toDateString()} thru ${messages.at(0)?.createdAt.toDateString()})`)
+                    // console.log(`Backing up ${messages.size} messages... (batch ${nbatch}, ${messages.at(-1)?.createdAt.toDateString()} thru ${messages.at(0)?.createdAt.toDateString()})`)
                     for (let [_id, msg] of messages) {
                         //create array of all attachment and embed ids
                         let allAttachments = [];
@@ -227,7 +232,7 @@ bot.on('ready', (client) => {
                     }
                     process.stdout.write('\n');
                     if (messages.size < 100) {
-                        console.log(`Under 100 messages (${messages.size}): ${channel.name.replace(/[\.\?\'\"]/gm, '')} fully backed up.`);
+                        // console.log(`Under 100 messages (${messages.size}): ${channel.name.replace(/[\.\?\'\"]/gm, '')} fully backed up.`);
                         break;
                     }
                 }
@@ -235,16 +240,21 @@ bot.on('ready', (client) => {
             }
             //also clone vc meta
             else if (channel.type == discord.ChannelType.GuildVoice) {
-                console.log('Saving voice channel metadata...');
+                // console.log('Saving voice channel metadata...');
                 if (!fs.existsSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}`)) {
                     fs.mkdirSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}`);
                     fs.writeFileSync(`../serverclone/channels/${(channel.parent) ? channel.parent.name.replace(/[\.\?\'\"]/gm, '') + '/' : ''}${channel.name.replace(/[\.\?\'\"]/gm, '')}/metadata`, JSON.stringify(channel.toJSON(), null, 4));
                 }
+                process.stdout.write('🔊');
             }
         }
+        process.stdout.write('\n');
         await downloadAllAttachments();
+        process.stdout.write('\n');
         await downloadAllStickers();
+        process.stdout.write('\n');
         await downloadAllUsers();
+        process.stdout.write('\n');
         await restoreServer();
     });
 
