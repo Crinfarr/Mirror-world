@@ -251,7 +251,9 @@ export function backupServer() {
             }
         });
     });
-    if (require.main == module) {
-        backupBot.login(token);
-    }
+    backupBot.login(token);
+}
+
+if (require.main == exports) {
+    backupServer();
 }
