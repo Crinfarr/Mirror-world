@@ -129,3 +129,4 @@ dist
 serverclone
 .creds.json
 build
+*.7z
