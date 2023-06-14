@@ -108,16 +108,21 @@ export function backupServer(serverid: string) {
                                     const afile = fs.createWriteStream('tmp.bin');
                                     process.stdout.write('🗋');
                                     await new Promise((res, rej) => {
-                                        https.get(attachment.url, (response) => {
-                                            response.pipe(afile);
-                                            afile.on('finish', () => {
-                                                afile.close();
-                                                res(null);
-                                            });
-                                            afile.on('error', () => {
-                                                rej(null);
+                                        try {
+                                            https.get(attachment.url, (response) => {
+                                                response.pipe(afile);
+                                                afile.on('finish', () => {
+                                                    afile.close();
+                                                    res(null);
+                                                });
+                                                afile.on('error', () => {
+                                                    rej(null);
+                                                })
                                             })
-                                        })
+                                        }
+                                        catch (_) {
+
+                                        }
                                     });
                                     process.stdout.write('✔');
                                     attachments.push(
@@ -176,17 +181,26 @@ export function backupServer(serverid: string) {
                                                 NOAVATAR = true;
                                                 resolve2(null);
                                             }
-                                            https.get(msg.author.avatarURL({ forceStatic: true })!, (response) => {
-                                                response.pipe(afile),
-                                                    afile.on('finish', () => {
-                                                        afile.close();
-                                                        process.stdout.write('✔');
-                                                        resolve2(null);
+                                            try {
+                                                https.get(msg.author.avatarURL({ forceStatic: true })!, (response) => {
+                                                    response.pipe(afile),
+                                                        afile.on('finish', () => {
+                                                            afile.close();
+                                                            process.stdout.write('✔');
+                                                            resolve2(null);
+                                                        });
+                                                    afile.on('error', () => {
+                                                        reject2(null);
                                                     });
-                                                afile.on('error', () => {
-                                                    reject2(null);
                                                 });
-                                            });
+                                            }
+                                            catch(_) {
+                                                afile.close();
+                                                process.stdout.write('✖');
+                                                NOAVATAR = true;
+                                                resolve2(null);
+                                            }
+                                            
                                         })
                                         process.stdout.write('🔒');
                                         await db.exec(`
