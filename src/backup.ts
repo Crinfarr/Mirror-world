@@ -173,14 +173,15 @@ export function backupServer(serverid: string) {
                                                 response.pipe(afile),
                                                     afile.on('finish', () => {
                                                         afile.close();
+                                                        process.stdout.write('✔');
                                                         resolve2(null);
                                                     });
                                                 afile.on('error', () => {
                                                     reject2(null);
                                                 });
                                             });
-                                            process.stdout.write('🔒');
                                         });
+                                        process.stdout.write('🔒');
                                         await db.exec(`
                                         INSERT INTO Users (
                                             uid,
