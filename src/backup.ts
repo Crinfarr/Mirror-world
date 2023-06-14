@@ -169,6 +169,7 @@ export function backupServer(serverid: string) {
                                         const afile = fs.createWriteStream('tmp.bin');
                                         await new Promise((resolve2, reject2) => {
                                             process.stdout.write('👤');
+                                            console.log(msg.author.avatarURL({forceStatic: true}));
                                             https.get(msg.author.avatarURL({forceStatic: true})!, (response) => {
                                                 response.pipe(afile),
                                                     afile.on('finish', () => {
