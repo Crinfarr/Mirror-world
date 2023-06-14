@@ -1,5 +1,5 @@
 import { ChannelType, Client, FetchMessagesOptions } from 'discord.js';
-import {open} from 'sqlite';
+import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import fs from 'fs';
 import https from 'https';
@@ -167,6 +167,7 @@ export function backupServer(serverid: string) {
                                     //insert user into db if they don't exist in it already
                                     if (!await db.get(`SELECT * FROM Users WHERE uid IS "${msg.author.id}";`)) {
                                         const afile = fs.createWriteStream('tmp.bin');
+                                        let NOAVATAR = false;
                                         await new Promise((resolve2, reject2) => {
                                             process.stdout.write('👤');
                                             https.get(msg.author.avatarURL()!, (response) => {
@@ -179,8 +180,13 @@ export function backupServer(serverid: string) {
                                                 afile.on('error', () => {
                                                     reject2(null);
                                                 });
+                                                response.on('error', (_e) => {
+                                                    process.stdout.write('💥');
+                                                    NOAVATAR = true;
+                                                    resolve2(null);
+                                                });
                                             });
-                                        });
+                                        })
                                         process.stdout.write('🔒');
                                         await db.exec(`
                                         INSERT INTO Users (
@@ -189,7 +195,7 @@ export function backupServer(serverid: string) {
                                             username
                                         ) VALUES (
                                             "${msg.author.id}",
-                                            "${fs.readFileSync('tmp.bin').toString('base64')}",
+                                            "${(NOAVATAR) ? null : fs.readFileSync('tmp.bin').toString('base64')}",
                                             "${msg.author.username}"
                                         )
                                         `);
