@@ -173,7 +173,7 @@ export function backupServer(serverid: string) {
                                         let NOAVATAR = false;
                                         await new Promise((resolve2, reject2) => {
                                             process.stdout.write('👤');
-                                            if (msg.author.avatarURL({ forceStatic: true }) == null) {
+                                            if (msg.author.avatarURL({ forceStatic: true }) == 'null') {
                                                 afile.close();
                                                 process.stdout.write('✖');
                                                 NOAVATAR = true;
