@@ -108,16 +108,21 @@ export function backupServer(serverid: string) {
                                     const afile = fs.createWriteStream('tmp.bin');
                                     process.stdout.write('🗋');
                                     await new Promise((res, rej) => {
-                                        https.get(attachment.url, (response) => {
-                                            response.pipe(afile);
-                                            afile.on('finish', () => {
-                                                afile.close();
-                                                res(null);
-                                            });
-                                            afile.on('error', () => {
-                                                rej(null);
+                                        try {
+                                            https.get(attachment.url, (response) => {
+                                                response.pipe(afile);
+                                                afile.on('finish', () => {
+                                                    afile.close();
+                                                    res(null);
+                                                });
+                                                afile.on('error', () => {
+                                                    rej(null);
+                                                })
                                             })
-                                        })
+                                        }
+                                        catch (_) {
+
+                                        }
                                     });
                                     process.stdout.write('✔');
                                     attachments.push(
@@ -172,7 +177,6 @@ export function backupServer(serverid: string) {
                                             process.stdout.write('👤');
                                             if (msg.author.avatarURL({ forceStatic: true }) == null) {
                                                 afile.close();
-                                                fs.rmSync('tmp.bin');
                                                 process.stdout.write('✖');
                                                 NOAVATAR = true;
                                                 resolve2(null);
@@ -192,7 +196,14 @@ export function backupServer(serverid: string) {
                                                 afile.on('error', () => {
                                                     reject2(null);
                                                 });
-                                            });
+                                            }
+                                            catch(_) {
+                                                afile.close();
+                                                process.stdout.write('✖');
+                                                NOAVATAR = true;
+                                                resolve2(null);
+                                            }
+                                            
                                         })
                                         process.stdout.write('🔒');
                                         await db.exec(`
