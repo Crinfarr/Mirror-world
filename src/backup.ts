@@ -178,12 +178,17 @@ export function backupServer(serverid: string) {
                                                 resolve2(null);
                                             }
                                             https.get(msg.author.avatarURL({ forceStatic: true })!, (response) => {
-                                                response.pipe(afile),
-                                                    afile.on('finish', () => {
-                                                        afile.close();
-                                                        process.stdout.write('✔');
-                                                        resolve2(null);
-                                                    });
+                                                response.pipe(afile);
+                                                response.on('error', () => {
+                                                    process.stdout.write('💥');
+                                                    NOAVATAR = true;
+                                                    resolve2(null);
+                                                });
+                                                afile.on('finish', () => {
+                                                    afile.close();
+                                                    process.stdout.write('✔');
+                                                    resolve2(null);
+                                                });
                                                 afile.on('error', () => {
                                                     reject2(null);
                                                 });
