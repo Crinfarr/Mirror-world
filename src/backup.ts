@@ -172,7 +172,6 @@ export function backupServer(serverid: string) {
                                             process.stdout.write('👤');
                                             if (msg.author.avatarURL({ forceStatic: true }) == null) {
                                                 afile.close();
-                                                fs.rmSync('tmp.bin');
                                                 process.stdout.write('✖');
                                                 NOAVATAR = true;
                                                 resolve2(null);
