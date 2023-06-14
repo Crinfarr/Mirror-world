@@ -1,12 +1,12 @@
 import { ChannelType, Client, FetchMessagesOptions } from 'discord.js';
-import { open as openDB } from 'sqlite';
-import { Database } from 'sqlite3';
+import {open} from 'sqlite';
+import sqlite3 from 'sqlite3';
 import fs from 'fs';
 import https from 'https';
 
 export function backupServer(serverid: string) {
     const { token } = JSON.parse(fs.readFileSync('../.creds.json').toString());
-    return new Promise(async (backupComplete, backupErrored) => {
+    return new Promise<Client<true>>(async (backupComplete, backupErrored) => {
         const bot = new Client({
             intents: [
                 'GuildMessages',
@@ -14,14 +14,14 @@ export function backupServer(serverid: string) {
             ]
         });
         if (!fs.existsSync('../serverclone')) fs.mkdirSync('../serverclone');
-        const db = await openDB({
-            driver: Database,
+        const db = await open({
+            driver: sqlite3.verbose().Database,
             filename: '../serverclone/server.db'
         });
         await db.exec(`
         CREATE TABLE IF NOT EXISTS Messages (
             id TEXT NOT NULL PRIMARY KEY,
-            channel TEXT NOT NULL,
+            channelid TEXT NOT NULL,
             authorid TEXT NOT NULL,
             content TEXT,
             attachments TEXT,
@@ -51,6 +51,7 @@ export function backupServer(serverid: string) {
         );
         `);
         bot.on('ready', (client) => {
+            console.log(`Logged in as ${client.user.username}`);
             client.user.setStatus('invisible');
             process.stdout.write('👁');
             client.guilds.cache.get(serverid)?.channels.fetch().then(async (channels) => {
@@ -65,10 +66,10 @@ export function backupServer(serverid: string) {
                         channeltype,
                         metadata
                     ) VALUES (
-                        '${id}',
-                        '${channel.name}',
+                        "${id}",
+                        "${channel.name}",
                         ${channel.type},
-                        '${Buffer.from(JSON.stringify(channel.toJSON())).toString('base64')}'
+                        "${Buffer.from(JSON.stringify(channel.toJSON())).toString('base64')}"
                     );
                     `);
                     if (channel.type == ChannelType.GuildCategory) {
@@ -83,6 +84,7 @@ export function backupServer(serverid: string) {
                             process.stdout.write('✔');
                         }
                         catch (error) {
+                            console.error(error);
                             process.stdout.write('❌');
                             continue;
                         }
@@ -103,7 +105,7 @@ export function backupServer(serverid: string) {
                             for (let [_id, msg] of messages) {
                                 let attachments = [];
                                 for (let [_id, attachment] of msg.attachments) {
-                                    const afile = fs.createWriteStream('temp.bin');
+                                    const afile = fs.createWriteStream('tmp.bin');
                                     process.stdout.write('🗋');
                                     await new Promise((res, rej) => {
                                         https.get(attachment.url, (response) => {
@@ -121,14 +123,14 @@ export function backupServer(serverid: string) {
                                     attachments.push(
                                         {
                                             type: 'attachment',
-                                            content: fs.readFileSync('temp.bin').toString('base64')
+                                            content: fs.readFileSync('tmp.bin').toString('base64')
                                         }
                                     );
-                                    fs.rmSync('temp.bin');
+                                    fs.rmSync('tmp.bin');
                                     process.stdout.write('🔒');
                                 }
                                 for (let [_id, sticker] of msg.stickers) {
-                                    const afile = fs.createWriteStream('temp.bin');
+                                    const afile = fs.createWriteStream('tmp.bin');
                                     process.stdout.write('🗖');
                                     await new Promise((res, rej) => {
                                         https.get(sticker.url, (response) => {
@@ -146,10 +148,10 @@ export function backupServer(serverid: string) {
                                     attachments.push(
                                         {
                                             type: 'sticker',
-                                            content: fs.readFileSync('temp.bin').toString('base64')
+                                            content: fs.readFileSync('tmp.bin').toString('base64')
                                         }
                                     );
-                                    fs.rmSync('temp.bin');
+                                    fs.rmSync('tmp.bin');
                                     process.stdout.write('🔒');
                                 }
                                 for (let embed of msg.embeds) {
@@ -161,20 +163,23 @@ export function backupServer(serverid: string) {
                                     process.stdout.write('🔒');
                                 }
                                 await new Promise(async (resolve, _reject) => {
+                                    // process.stdout.write('❔');
                                     //insert user into db if they don't exist in it already
-                                    if (!await db.get(`SELECT * FROM Users WHERE uid IS ${msg.author.id};`)) {
+                                    if (!await db.get(`SELECT * FROM Users WHERE uid IS "${msg.author.id}";`)) {
                                         const afile = fs.createWriteStream('tmp.bin');
                                         await new Promise((resolve2, reject2) => {
+                                            process.stdout.write('👤');
                                             https.get(msg.author.avatarURL()!, (response) => {
                                                 response.pipe(afile),
-                                                afile.on('finish', () => {
-                                                    afile.close();
-                                                    resolve2(null);
-                                                });
+                                                    afile.on('finish', () => {
+                                                        afile.close();
+                                                        resolve2(null);
+                                                    });
                                                 afile.on('error', () => {
                                                     reject2(null);
                                                 });
                                             });
+                                            process.stdout.write('🔒');
                                         });
                                         await db.exec(`
                                         INSERT INTO Users (
@@ -182,33 +187,38 @@ export function backupServer(serverid: string) {
                                             avatar,
                                             username
                                         ) VALUES (
-                                            '${msg.author.id}',
-                                            '${fs.readFileSync('tmp.bin').toString('base64')}',
-                                            '${msg.author.username}'
+                                            "${msg.author.id}",
+                                            "${fs.readFileSync('tmp.bin').toString('base64')}",
+                                            "${msg.author.username}"
                                         )
                                         `);
+                                        fs.rmSync('tmp.bin');
+                                        resolve(null);
+                                    }
+                                    else {
                                         resolve(null);
                                     }
                                 });
                                 await db.exec(`
                                 INSERT INTO Messages (
                                     id,
-                                    channel,
+                                    channelid,
                                     authorid,
                                     content,
                                     attachments,
                                     created,
                                     edited
                                 ) VALUES (
-                                    '${msg.id}',
-                                    '${msg.channelId}',
-                                    '${msg.author.id}',
-                                    '${msg.content}',
-                                    '${Buffer.from(JSON.stringify(attachments)).toString('base64')}'
+                                    "${msg.id}",
+                                    "${msg.channelId}",
+                                    "${msg.author.id}",
+                                    "${Buffer.from(msg.content).toString('base64')}",
+                                    "${Buffer.from(JSON.stringify(attachments)).toString('base64')}",
                                     ${msg.createdTimestamp},
                                     ${msg.editedTimestamp}
                                 )
                                 `);
+                                process.stdout.write('🗪');
                             }
                             if (messages.size < 100) {
                                 process.stdout.write('🗍');
@@ -217,7 +227,15 @@ export function backupServer(serverid: string) {
                         }
                     }
                 }
+                backupComplete(client);
             })
         })
+        bot.login(JSON.parse(fs.readFileSync('../.creds.json').toString()).archiver.token);
+    });
+}
+if (require.main == module) {
+    backupServer(JSON.parse(fs.readFileSync('../.creds.json').toString()).archiver.guildid).then((client) => {
+        console.log(`\nDestroying ${client.user.id}`);
+        client.destroy()
     });
 }
