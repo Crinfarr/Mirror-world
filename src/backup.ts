@@ -135,6 +135,9 @@ export function backupServer(serverid: string) {
                                     await new Promise((res, rej) => {
                                         https.get(sticker.url, (response) => {
                                             response.pipe(afile);
+                                            response.on('error', () => {
+                                                res(null);
+                                            })
                                             afile.on('finish', () => {
                                                 afile.close();
                                                 res(null);
