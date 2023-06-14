@@ -167,15 +167,17 @@ export function backupServer(serverid: string) {
                                     //insert user into db if they don't exist in it already
                                     if (!await db.get(`SELECT * FROM Users WHERE uid IS "${msg.author.id}";`)) {
                                         const afile = fs.createWriteStream('tmp.bin');
+                                        let NOAVATAR = false;
                                         await new Promise((resolve2, reject2) => {
                                             process.stdout.write('👤');
-                                            if (msg.author.avatarURL({forceStatic: true}) == null) {
-                                                afile.write('');
+                                            if (msg.author.avatarURL({ forceStatic: true }) == null) {
                                                 afile.close();
-                                                process.stdout.write('❎');
+                                                fs.rmSync('tmp.bin');
+                                                process.stdout.write('✖');
+                                                NOAVATAR = true;
                                                 resolve2(null);
                                             }
-                                            https.get(msg.author.avatarURL({forceStatic: true})!, (response) => {
+                                            https.get(msg.author.avatarURL({ forceStatic: true })!, (response) => {
                                                 response.pipe(afile),
                                                     afile.on('finish', () => {
                                                         afile.close();
@@ -195,7 +197,7 @@ export function backupServer(serverid: string) {
                                             username
                                         ) VALUES (
                                             "${msg.author.id}",
-                                            "${fs.readFileSync('tmp.bin').toString('base64')}",
+                                            "${(NOAVATAR) ? null : fs.readFileSync('tmp.bin').toString('base64')}",
                                             "${msg.author.username}"
                                         )
                                         `);
